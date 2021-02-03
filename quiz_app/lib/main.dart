@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'question.dart';
+import 'quiz_brain.dart';
+import 'package:giffy_dialog/giffy_dialog.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -28,6 +31,50 @@ class Quizz extends StatefulWidget {
 
 class _QuizzState extends State<Quizz> {
   List<Icon> scoreKeeper = [];
+  int score = 0;
+
+  void restartGame(){
+    setState(() {
+      scoreKeeper.clear();
+      score = 0;
+      quizBrain.resetQuestionNumber();
+    });
+  }
+
+  void checkAnswer(bool selectedAnswer) {
+    setState(() {
+      if (quizBrain.isEndOfQuiz()) {
+        showDialog(context: context, builder: (_) => AssetGiffyDialog(
+          image: Image.asset('assets/gameover.gif', fit: BoxFit.fill),
+          title: Text('GAME OVER!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 24.0, fontWeight: FontWeight.w600),
+          ),
+          buttonOkText: Text('RESTART', style: TextStyle(fontSize: 14.0, color: Colors.white)),
+          buttonCancelText: Text('CANCEL', style: TextStyle(fontSize: 14.0, color: Colors.white)),
+          description: Text(
+            'This is the end of the game! You\'ve got a score of $score. \n Do you want to restart?',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18.0),
+          ),
+          entryAnimation: EntryAnimation.TOP_LEFT,
+          onOkButtonPressed: () {
+            restartGame();
+            Navigator.pop(context);
+          },
+        ) );
+      } else {
+        if (quizBrain.getQuestionAnswer() == selectedAnswer) {
+          score++;
+          scoreKeeper.add(Icon(Icons.check, color: Colors.green));
+        } else {
+          scoreKeeper.add(Icon(Icons.close, color: Colors.red));
+        }
+        quizBrain.nextQuestion();
+      }
+    });
+  }
   // List<String> questions = [
   //   'You can lead a cow down stairs but not up stairs.',
   //   'Approximately one quarter of human bones are in the feet.',
@@ -37,12 +84,6 @@ class _QuizzState extends State<Quizz> {
   //   false, true, true
   // ];
   // Question q1 = Question(questionText: 'You can lead a cow down stairs but not up stairs.', questionAnswer: false);
-
-  List<Question> questionBank = [
-    Question(q: 'You can lead a cow down stairs but not up stairs.', a: true),
-    Question(q: 'Approximately one quarter of human bones are in the feet.', a: true),
-    Question(q: 'A slug\'s blood is green.', a: true)
-  ];
 
   int questionNumber = 0;
 
@@ -58,7 +99,7 @@ class _QuizzState extends State<Quizz> {
             child: Padding(
               padding: const EdgeInsets.all(15.0),
               child: Text(
-                questionBank[questionNumber].questionText,
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
@@ -84,15 +125,7 @@ class _QuizzState extends State<Quizz> {
                 ),
               ),
               onPressed: () {
-                if(questionBank[questionNumber].questionAnswer == true){
-                  print('You got it right');
-                }
-                else {
-                  print('You got it wrong');
-                }
-                setState(() {
-                  questionNumber++;
-                });
+                checkAnswer(true);
               },
             ),
           ),
@@ -102,15 +135,7 @@ class _QuizzState extends State<Quizz> {
             padding: const EdgeInsets.all(15.0),
             child: FlatButton(
               onPressed: () {
-                if(questionBank[questionNumber].questionAnswer == false){
-                  print('You got it right');
-                }
-                else {
-                  print('You got it wrong');
-                }
-                setState(() {
-                  questionNumber++;
-                });
+                checkAnswer(false);
               },
               color: Colors.red[600],
               child: Text(
@@ -133,9 +158,3 @@ class _QuizzState extends State<Quizz> {
     );
   }
 }
-
-/*
-question1: 'You can lead a cow down stairs but not up stairs.', false,
-question2: 'Approximately one quarter of human bones are in the feet.', true,
-question3: 'A slug\'s blood is green.', true,
-*/
